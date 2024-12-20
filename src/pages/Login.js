@@ -34,19 +34,6 @@
 //         console.error('Error logging in:', error.message);
 //       }
 //     };
-  
-//     const handleLoginWithGoogle = async (e) => {
-//         e.preventDefault(); 
-//       try {
-//         await firebase.signinWithGoogle();
-//         // Handle successful login
-//         console.log('Login successful');
-//         navigate('/');
-//       } catch (error) {
-//         // Handle login error
-//         console.error('Error logging in with Google:', error.message);
-//       }
-//     };
 
 //     const handleAnonymousLogin = async (e) => {
 //     e.preventDefault();
