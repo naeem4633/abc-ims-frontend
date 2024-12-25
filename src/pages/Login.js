@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useFirebase } from '../context/firebase';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import '../authorization.css';
 
 const Login = () => {
@@ -11,27 +12,44 @@ const Login = () => {
     const navigate = useNavigate();
     const firebase = useFirebase();
 
-    useEffect(() => {
-        const unsubscribe = firebase.firebaseAuth.onAuthStateChanged(user => {
-            if (user) {
-                console.log(`${user.email} is already signed in, redirecting to landing page...`);
-                navigate('/');
-            }
-        });
-
-        return unsubscribe;
-    }, [firebase, navigate]);
-
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
         try {
-            await firebase.signinUser(email, password);
+            // Login the user with Firebase
+            const userCredential = await firebase.signinUser(email, password);
             console.log('Login successful');
-            navigate('/');
+    
+            // Get the currently signed-in user
+            const currentUser = firebase.firebaseAuth.currentUser;
+    
+            if (!currentUser) {
+                throw new Error('No current user found after login.');
+            }
+    
+            // Get the ID token from the signed-in user
+            const idToken = await currentUser.getIdToken();
+    
+            // Fetch user info from the backend
+            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/users/user-info/`, {
+                headers: {
+                    Authorization: `Bearer ${idToken}`,
+                },
+            });
+    
+            // Log the user info and store it in local storage
+            const user = response.data.user;
+            console.log('User Info:', user);
+            localStorage.setItem('user', JSON.stringify(user));
+    
+            if (user.user_detail.role === 'Patient') {
+                navigate('/patient-landing-page');
+            } else {
+                navigate('/');
+            }
         } catch (err) {
-            setError(err.message);
+            setError(err.response?.data?.error || err.message);
         } finally {
             setLoading(false);
         }
@@ -44,27 +62,47 @@ const Login = () => {
                     <label>Email </label>
                 </div>
                 <div className="authorization-inputForm">
-                    <input type="email" id="email" name="email" className="authorization-input" 
-                        value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your Email" />
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        className="authorization-input"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Enter your Email"
+                    />
                 </div>
 
                 <div className="authorization-flex-column">
                     <label>Password </label>
                 </div>
                 <div className="authorization-inputForm">
-                    <input type="password" id="password" name="password" className="authorization-input" 
-                        value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your Password" />
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        className="authorization-input"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter your Password"
+                    />
                 </div>
 
                 {error && <p className="error-text">{error}</p>}
 
-                <button type="button" onClick={handleLogin} 
-                    className="authorization-button-submit transition-all duration-200" 
-                    disabled={loading}>
+                <button
+                    type="button"
+                    onClick={handleLogin}
+                    className="authorization-button-submit transition-all duration-200"
+                    disabled={loading}
+                >
                     {loading ? 'Signing In...' : 'Sign In'}
                 </button>
-                <p className="authorization-p">Don't have an account? 
-                    <span className="authorization-span"><Link to={'/signup'}>Sign Up</Link></span>
+                <p className="authorization-p">
+                    Don't have an account?{' '}
+                    <span className="authorization-span">
+                        <Link to={'/signup'}>Sign Up</Link>
+                    </span>
                 </p>
             </form>
         </section>

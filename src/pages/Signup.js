@@ -8,7 +8,9 @@ const Signup = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [abcNumber, setAbcNumber] = useState('');
-    const [role, setRole] = useState('Patient'); // Default to 'Patient'
+    const [role, setRole] = useState('Patient');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
@@ -19,27 +21,32 @@ const Signup = () => {
         setError('');
         try {
             // Validate ABC number and role on the backend
-            const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/validate-abc`, {
+            const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/users/validate-abc/`, {
                 abc_number: abcNumber,
                 role,
             });
-
+    
             if (response.data.success) {
                 // Proceed with Firebase sign-up
-                await firebase.signupUserWithEmailAndPassword(email, password);
-
-                // Update the backend with email after Firebase signup
-                await axios.patch(`${process.env.REACT_APP_BACKEND_URL}/update-user-email`, {
+                const userCredential = await firebase.signupUserWithEmailAndPassword(email, password);
+                const firebaseId = userCredential.uid; // Retrieve Firebase ID
+    
+                // Update the backend with user details after Firebase signup
+                await axios.patch(`${process.env.REACT_APP_BACKEND_URL}/users/update-user-email/`, {
                     abc_number: abcNumber,
                     email,
+                    first_name: firstName,
+                    last_name: lastName,
+                    firebase_id: firebaseId,
                 });
-
+    
                 console.log('Signup successful');
                 navigate('/');
             } else {
                 setError('Invalid ABC number or role mismatch.');
             }
         } catch (err) {
+            console.log("sign up error: ", err)
             setError(err.response?.data?.message || 'Error signing up.');
         } finally {
             setLoading(false);
@@ -78,6 +85,36 @@ const Signup = () => {
                         <option value="Patient">Patient</option>
                         <option value="Staff">Staff</option>
                     </select>
+                </div>
+
+                <div className="authorization-flex-column">
+                    <label>First Name</label>
+                </div>
+                <div className="authorization-inputForm">
+                    <input
+                        type="text"
+                        id="firstName"
+                        name="firstName"
+                        className="authorization-input"
+                        placeholder="Enter your First Name"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                    />
+                </div>
+
+                <div className="authorization-flex-column">
+                    <label>Last Name</label>
+                </div>
+                <div className="authorization-inputForm">
+                    <input
+                        type="text"
+                        id="lastName"
+                        name="lastName"
+                        className="authorization-input"
+                        placeholder="Enter your Last Name"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                    />
                 </div>
 
                 <div className="authorization-flex-column">
