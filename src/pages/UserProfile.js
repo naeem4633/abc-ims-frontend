@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
 
 const UserProfile = () => {
+    const { id } = useParams(); // Get the id from route params
     const [userData, setUserData] = useState(null);
     const [editableData, setEditableData] = useState({
         first_name: '',
@@ -14,18 +16,28 @@ const UserProfile = () => {
     const [success, setSuccess] = useState('');
 
     useEffect(() => {
-        // Fetch the user object from local storage
-        const user = JSON.parse(localStorage.getItem('user'));
-        setUserData(user);
+        const fetchUserData = async () => {
+            try {
+                // Determine the route dynamically based on role
+                const role = 'patients'; // Replace with logic to determine role, if necessary
+                const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/users/${role}/${id}/`);
+                const user = response.data;
+                console.log("details fetched", response.data)
+                setUserData(user);
 
-        // Set editable fields
-        setEditableData({
-            first_name: user?.user_detail.first_name || '',
-            last_name: user?.user_detail.last_name || '',
-            address: user?.address || '',
-            phone: user?.phone || '',
-        });
-    }, []);
+                setEditableData({
+                    first_name: user.user_detail.first_name || '',
+                    last_name: user.user_detail.last_name || '',
+                    address: user.address || '',
+                    phone: user.phone || '',
+                });
+            } catch (err) {
+                setError('Failed to fetch user details.');
+            }
+        };
+
+        fetchUserData();
+    }, [id]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -39,26 +51,19 @@ const UserProfile = () => {
         setError('');
         setSuccess('');
 
-        // Determine the endpoint based on the user's role
-        const role = userData.user_detail.role.toLowerCase();
-        const updateUrl = `${process.env.REACT_APP_BACKEND_URL}/users/${role}s/${userData.id}/`;
-
         try {
+            const role = 'patients'; // Replace with logic to determine role, if necessary
+            const updateUrl = `${process.env.REACT_APP_BACKEND_URL}/users/${role}/${id}/`;
+
             const response = await axios.patch(updateUrl, editableData, {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
             });
 
-            // Update local storage with the new data
             const updatedUser = {
                 ...userData,
                 ...response.data,
                 user_detail: { ...userData.user_detail, ...response.data.user_detail },
             };
-            localStorage.setItem('user', JSON.stringify(updatedUser));
-
-            // Update the state
             setUserData(updatedUser);
             setSuccess('Profile updated successfully.');
             console.log('Updated User Profile:', updatedUser);

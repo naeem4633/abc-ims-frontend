@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useFirebase } from '../context/firebase';
-import '../authorization.css';
 import axios from 'axios';
+import '../authorization.css';
 
-const Signup = () => {
+const AdminSignup = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [abcNumber, setAbcNumber] = useState('');
-    const [role, setRole] = useState('Patient'); // Default to Patient
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [loading, setLoading] = useState(false);
@@ -20,16 +19,16 @@ const Signup = () => {
         setLoading(true);
         setError('');
         try {
-            // Validate ABC number and role on the backend
+            // Validate ABC number with the static role 'Admin'
             const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/users/validate-abc/`, {
                 abc_number: abcNumber,
-                role,
+                role: 'Admin',
             });
 
             if (response.data.success) {
                 // Proceed with Firebase sign-up
                 const userCredential = await firebase.signupUserWithEmailAndPassword(email, password);
-                const firebaseId = userCredential.user.uid; // Retrieve Firebase ID
+                const firebaseId = userCredential.user.uid;
 
                 // Update the backend with user details after Firebase signup
                 await axios.patch(`${process.env.REACT_APP_BACKEND_URL}/users/update-user-email/`, {
@@ -40,37 +39,16 @@ const Signup = () => {
                     firebase_id: firebaseId,
                 });
 
-                console.log('Signup successful');
+                console.log('Admin Signup successful');
 
-                // Fetch the full user details after signup
-                const idToken = await userCredential.user.getIdToken();
-                const userInfoResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/users/user-info/`, {
-                    headers: {
-                        Authorization: `Bearer ${idToken}`,
-                    },
-                });
-
-                const user = userInfoResponse.data.user;
-                console.log('Fetched User Info:', user);
-
-                // Store user details in local storage
-                localStorage.setItem('user', JSON.stringify(user));
-
-                // Navigate based on role
-                if (user.user_detail.role === 'Patient') {
-                    navigate('/patient-landing-page');
-                } else {
-                    navigate('/');
-                }
+                // Redirect to Admin Login page
+                navigate('/admin-login');
             } else {
                 setError('Invalid ABC number or role mismatch.');
             }
         } catch (err) {
             console.error('Signup Error:', err);
-            setError(
-                err.response?.data?.message ||
-                `Error: ${role} with this ABC number does not exist. Please contact admin.`
-            );
+            setError(err.response?.data?.message || 'Error signing up.');
         } finally {
             setLoading(false);
         }
@@ -92,22 +70,6 @@ const Signup = () => {
                         value={abcNumber}
                         onChange={(e) => setAbcNumber(e.target.value)}
                     />
-                </div>
-
-                <div className="authorization-flex-column">
-                    <label>Role</label>
-                </div>
-                <div className="authorization-inputForm">
-                    <select
-                        id="role"
-                        name="role"
-                        className="authorization-input"
-                        value={role}
-                        onChange={(e) => setRole(e.target.value)}
-                    >
-                        <option value="Patient">Patient</option>
-                        <option value="Staff">Staff</option>
-                    </select>
                 </div>
 
                 <div className="authorization-flex-column">
@@ -180,15 +142,9 @@ const Signup = () => {
                 >
                     {loading ? 'Signing Up...' : 'Sign Up'}
                 </button>
-                <p className="authorization-p">
-                    Already have an account?{' '}
-                    <span className="authorization-span">
-                        <Link to={'/login'}>Sign In</Link>
-                    </span>
-                </p>
             </form>
         </section>
     );
 };
 
-export default Signup;
+export default AdminSignup;
