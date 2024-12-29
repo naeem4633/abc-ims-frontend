@@ -16,6 +16,7 @@ const DiagnosisDetails = () => {
         const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/patients/diagnosis-details/${id}/`);
         setDiagnosis(response.data.diagnosis);
         setImages(response.data.images);
+        console.log("response:", response.data)
       } catch (err) {
         setError('Error fetching diagnosis details');
       } finally {
@@ -46,7 +47,11 @@ const DiagnosisDetails = () => {
           <p><strong>Name:</strong> {diagnosis.name || 'Unnamed Diagnosis'}</p>
           <p><strong>Details:</strong> {diagnosis.diagnosis_details}</p>
           <p><strong>Confirmed:</strong> {diagnosis.confirmed ? 'Yes' : 'No'}</p>
-          <p><strong>Diagnosed By:</strong> {diagnosis.diagnosed_by?.first_name} {diagnosis.diagnosed_by?.last_name}</p>
+          <p>
+            <strong>Diagnosed By:</strong>{' '}
+            {diagnosis.diagnosed_by?.first_name} {diagnosis.diagnosed_by?.last_name} 
+            {diagnosis.diagnosed_by?.specialization && ` (${diagnosis.diagnosed_by.specialization})`}
+          </p>
           <p><strong>Timestamp:</strong> {new Date(diagnosis.timestamp).toLocaleString()}</p>
 
           <h2 className="text-xl font-bold mt-6 mb-2">
