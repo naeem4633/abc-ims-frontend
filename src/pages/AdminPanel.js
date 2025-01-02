@@ -4,20 +4,31 @@ import {
     getPatients, getStaffs, getAdmins,
     createUser, createPatient, createStaff, createAdmin
 } from '../services/userService';
-import {
-    getTaskCosts, createTaskCost, updateTaskCost, deleteTaskCost
-} from '../services/taskService';
+import { getImages } from '../services/imageService';
 import ImageManagement from '../components/ImageManagement';
+import TaskCostManagement from '../components/TaskCostManagement';
+import TaskLog from '../components/TaskLog';
 
 const AdminPanel = () => {
     const [activeTab, setActiveTab] = useState('Patients');
     const [patients, setPatients] = useState([]);
     const [staffs, setStaffs] = useState([]);
     const [admins, setAdmins] = useState([]);
-    const [taskCosts, setTaskCosts] = useState([]);
-    const [showTaskCostModal, setShowTaskCostModal] = useState(false);
-    const [taskCostForm, setTaskCostForm] = useState({ id: null, name: '', cost: '' });
+    const [images, setImages] = useState([]);
+    const [showModal, setShowModal] = useState(false);
     const [error, setError] = useState('');
+    const [newUser, setNewUser] = useState({
+        first_name: '',
+        last_name: '',
+        email: '',
+        abc_number: '',
+        role: '',
+        date_of_birth: '',
+        address: '', // For patients
+        phone: '', // For patients
+        specialization: '', // For staff
+        admin_level: 'Super Admin', // For admins
+    });
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -26,44 +37,82 @@ const AdminPanel = () => {
                 setPatients(await getPatients());
                 setStaffs(await getStaffs());
                 setAdmins(await getAdmins());
-                setTaskCosts(await getTaskCosts());
             } catch (err) {
                 setError('Error fetching data');
             }
         };
+
+        const fetchImages = async () => {
+            try {
+                const fetchedImages = await getImages();
+                setImages(fetchedImages);
+            } catch (err) {
+                setError('Error fetching images');
+            }
+        };
+
         fetchData();
+        fetchImages();
     }, []);
 
     const handleRowClick = (id, role) => {
         navigate(`/user-profile/${id}`, { state: { role } });
     };
 
-    const handleTaskCostChange = (e) => {
+    const handleNewUserChange = (e) => {
         const { name, value } = e.target;
-        setTaskCostForm((prev) => ({ ...prev, [name]: value }));
+        setNewUser((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSaveTaskCost = async () => {
+    const handleCreateUser = async () => {
         try {
-            if (taskCostForm.id) {
-                await updateTaskCost(taskCostForm.id, taskCostForm);
-            } else {
-                await createTaskCost(taskCostForm);
+            const userData = {
+                first_name: newUser.first_name,
+                last_name: newUser.last_name,
+                email: newUser.email,
+                abc_number: newUser.abc_number,
+                role: activeTab.slice(0, -1), // 'Patients' -> 'Patient'
+                date_of_birth: newUser.date_of_birth,
+            };
+
+            const createdUser = await createUser(userData);
+
+            if (activeTab === 'Patients') {
+                await createPatient({
+                    user: createdUser.id,
+                    address: newUser.address,
+                    phone: newUser.phone,
+                });
+                setPatients(await getPatients());
+            } else if (activeTab === 'Staff') {
+                await createStaff({
+                    user: createdUser.id,
+                    specialization: newUser.specialization,
+                });
+                setStaffs(await getStaffs());
+            } else if (activeTab === 'Admins') {
+                await createAdmin({
+                    user: createdUser.id,
+                    admin_level: newUser.admin_level,
+                });
+                setAdmins(await getAdmins());
             }
-            setTaskCosts(await getTaskCosts());
-            setShowTaskCostModal(false);
-            setTaskCostForm({ id: null, name: '', cost: '' });
-        } catch (err) {
-            setError('Failed to save task cost. Please try again.');
-        }
-    };
 
-    const handleDeleteTaskCost = async (id) => {
-        try {
-            await deleteTaskCost(id);
-            setTaskCosts(await getTaskCosts());
+            setShowModal(false);
+            setNewUser({
+                first_name: '',
+                last_name: '',
+                email: '',
+                abc_number: '',
+                role: '',
+                date_of_birth: '',
+                address: '',
+                phone: '',
+                specialization: '',
+                admin_level: 'Super Admin',
+            });
         } catch (err) {
-            setError('Failed to delete task cost. Please try again.');
+            setError('Failed to create user. Please try again.');
         }
     };
 
@@ -93,7 +142,7 @@ const AdminPanel = () => {
 
             {/* Tabs */}
             <div className="flex space-x-4 border-b-2 pb-2">
-                {['Patients', 'Staff', 'Admins', 'Task Costs', 'Image Management'].map((tab) => (
+                {['Patients', 'Staff', 'Admins', 'Task Costs', 'Task Log', 'Image Management'].map((tab) => (
                     <button
                         key={tab}
                         className={`px-4 py-2 ${activeTab === tab ? 'border-b-4 border-blue-500 font-bold' : ''}`}
@@ -102,6 +151,14 @@ const AdminPanel = () => {
                         {tab}
                     </button>
                 ))}
+                {['Patients', 'Staff', 'Admins'].includes(activeTab) && (
+                    <button
+                        className="ml-auto bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                        onClick={() => setShowModal(true)}
+                    >
+                        Create {activeTab.slice(0, -1)}
+                    </button>
+                )}
             </div>
 
             {/* Panels */}
@@ -109,44 +166,9 @@ const AdminPanel = () => {
                 {activeTab === 'Patients' && renderList(patients, 'Patient')}
                 {activeTab === 'Staff' && renderList(staffs, 'Staff')}
                 {activeTab === 'Admins' && renderList(admins, 'Admin')}
-                {activeTab === 'Task Costs' && (
-                    <div className="space-y-4">
-                        <button
-                            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                            onClick={() => setShowTaskCostModal(true)}
-                        >
-                            Add Task Cost
-                        </button>
-                        <ul className="space-y-4">
-                            {taskCosts.map((taskCost) => (
-                                <li key={taskCost.id} className="flex justify-between items-center bg-gray-100 p-4 rounded">
-                                    <div>
-                                        <p><strong>Name:</strong> {taskCost.name}</p>
-                                        <p><strong>Cost:</strong> ${taskCost.cost}</p>
-                                    </div>
-                                    <div className="space-x-2">
-                                        <button
-                                            className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600"
-                                            onClick={() => {
-                                                setTaskCostForm(taskCost);
-                                                setShowTaskCostModal(true);
-                                            }}
-                                        >
-                                            Edit
-                                        </button>
-                                        <button
-                                            className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
-                                            onClick={() => handleDeleteTaskCost(taskCost.id)}
-                                        >
-                                            Delete
-                                        </button>
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-                {activeTab === 'Image Management' && <ImageManagement />}
+                {activeTab === 'Task Costs' && <TaskCostManagement />}
+                {activeTab === 'Task Log' && <TaskLog />}
+                {activeTab === 'Image Management' && <ImageManagement initialImages={images} />}
             </div>
         </div>
     );

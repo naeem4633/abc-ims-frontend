@@ -29,7 +29,7 @@ const Signup = () => {
             if (response.data.success) {
                 // Proceed with Firebase sign-up
                 const userCredential = await firebase.signupUserWithEmailAndPassword(email, password);
-                const firebaseId = userCredential.user.uid; // Retrieve Firebase ID
+                const firebaseId = userCredential.uid; // Retrieve Firebase ID
 
                 // Update the backend with user details after Firebase signup
                 await axios.patch(`${process.env.REACT_APP_BACKEND_URL}/users/update-user-email/`, {
@@ -43,7 +43,7 @@ const Signup = () => {
                 console.log('Signup successful');
 
                 // Fetch the full user details after signup
-                const idToken = await userCredential.user.getIdToken();
+                const idToken = await userCredential.getIdToken();
                 const userInfoResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/users/user-info/`, {
                     headers: {
                         Authorization: `Bearer ${idToken}`,

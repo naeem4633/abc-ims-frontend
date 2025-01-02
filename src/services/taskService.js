@@ -31,3 +31,17 @@ export const deleteTaskCost = async (id) => {
     const response = await axios.delete(`${BASE_URL}/tasks-and-billing/task-costs/${id}/`);
     return response.data;
 };
+
+export const getTasks = async () => {
+    const response = await axios.get(`${BASE_URL}/tasks-and-billing/tasks/`);
+    return response.data;
+};
+
+export const deleteTask = async (id) => {
+    await axios.delete(`${BASE_URL}/tasks/${id}/tasks-and-billing/`);
+};
+
+export const getTaskDetails = async (id) => {
+    const response = await axios.get(`${BASE_URL}/tasks-and-billing/task-details/${id}/`);
+    return response.data;
+};

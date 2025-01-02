@@ -10,8 +10,12 @@ import AdminPanel from './pages/AdminPanel';
 import UserProfile from './pages/UserProfile';
 import AdminSignup from './pages/AdminSignup';
 import AdminLogin from './pages/AdminLogin';
-import PatientMedicalRecords from './pages/PatientMedicalRecord';
+import PatientMedicalRecords from './pages/PatientMedicalRecords';
 import DiagnosisDetails from './pages/DiagnosisDetails';
+import ImageDetails from './components/ImageDetails';
+import TaskDetails from './components/TasksDetails';
+import PatientBilling from './pages/PatientBilling';
+import StaffLandingPage from './pages/StaffLandingPage';
 
 function App() {
   return (
@@ -30,6 +34,10 @@ function App() {
             <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/patient-medical-records" element={<PatientMedicalRecords />} />
             <Route path="/diagnosis-details/:id" element={<DiagnosisDetails />} />
+            <Route path="/image-details/:id" element={<ImageDetails />} />
+            <Route path="/task-details/:id" element={<TaskDetails />} />
+            <Route path="/patient-billing" element={<PatientBilling />} />
+            <Route path="/staff-landing-page" element={<StaffLandingPage />} />
             {/* <Route path="*" element={<ErrorPage />} /> */}
           </Routes>
         </div>
