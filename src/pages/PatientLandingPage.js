@@ -33,7 +33,7 @@ const PatientLandingPage = () => {
           Billing
         </Link>
         <Link
-          to="/patient-medical-records"
+          to={`/patient-medical-records/${userId}`} // Pass the userId dynamically in params
           className="bg-purple-500 text-white px-4 py-6 rounded-lg shadow-md hover:bg-purple-600"
         >
           Medical Records

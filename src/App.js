@@ -16,6 +16,9 @@ import ImageDetails from './components/ImageDetails';
 import TaskDetails from './components/TasksDetails';
 import PatientBilling from './pages/PatientBilling';
 import StaffLandingPage from './pages/StaffLandingPage';
+import SearchPatientRecords from './pages/SearchPatientRecords';
+import SearchPatientProfiles from './pages/SearchPatientProfiles';
+import UploadNewImageDiagnosis from './pages/UploadNewImageDiagnosis';
 
 function App() {
   return (
@@ -32,12 +35,15 @@ function App() {
             <Route path="/user-profile/:id" element={<UserProfile />} />
             <Route path="/admin-signup" element={<AdminSignup />} />
             <Route path="/admin-login" element={<AdminLogin />} />
-            <Route path="/patient-medical-records" element={<PatientMedicalRecords />} />
+            <Route path="/patient-medical-records/:patientId" element={<PatientMedicalRecords />} />
             <Route path="/diagnosis-details/:id" element={<DiagnosisDetails />} />
             <Route path="/image-details/:id" element={<ImageDetails />} />
             <Route path="/task-details/:id" element={<TaskDetails />} />
             <Route path="/patient-billing" element={<PatientBilling />} />
             <Route path="/staff-landing-page" element={<StaffLandingPage />} />
+            <Route path="/search-patient-records" element={<SearchPatientRecords />} />
+            <Route path="/search-patient-profiles" element={<SearchPatientProfiles />} />
+            <Route path="/new-image-diagnosis" element={< UploadNewImageDiagnosis/>} />
             {/* <Route path="*" element={<ErrorPage />} /> */}
           </Routes>
         </div>

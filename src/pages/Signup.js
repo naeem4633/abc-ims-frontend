@@ -25,12 +25,12 @@ const Signup = () => {
                 abc_number: abcNumber,
                 role,
             });
-
+    
             if (response.data.success) {
                 // Proceed with Firebase sign-up
                 const userCredential = await firebase.signupUserWithEmailAndPassword(email, password);
                 const firebaseId = userCredential.uid; // Retrieve Firebase ID
-
+    
                 // Update the backend with user details after Firebase signup
                 await axios.patch(`${process.env.REACT_APP_BACKEND_URL}/users/update-user-email/`, {
                     abc_number: abcNumber,
@@ -39,9 +39,9 @@ const Signup = () => {
                     last_name: lastName,
                     firebase_id: firebaseId,
                 });
-
+    
                 console.log('Signup successful');
-
+    
                 // Fetch the full user details after signup
                 const idToken = await userCredential.getIdToken();
                 const userInfoResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/users/user-info/`, {
@@ -49,18 +49,20 @@ const Signup = () => {
                         Authorization: `Bearer ${idToken}`,
                     },
                 });
-
+    
                 const user = userInfoResponse.data.user;
                 console.log('Fetched User Info:', user);
-
+    
                 // Store user details in local storage
                 localStorage.setItem('user', JSON.stringify(user));
-
+    
                 // Navigate based on role
                 if (user.user_detail.role === 'Patient') {
                     navigate('/patient-landing-page');
+                } else if (user.user_detail.role === 'Staff') {
+                    navigate('/staff-landing-page');
                 } else {
-                    navigate('/');
+                    navigate('/'); // Default fallback
                 }
             } else {
                 setError('Invalid ABC number or role mismatch.');

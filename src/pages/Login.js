@@ -43,10 +43,16 @@ const Login = () => {
             console.log('User Info:', user);
             localStorage.setItem('user', JSON.stringify(user));
     
-            if (user.user_detail.role === 'Patient') {
+            // Redirect based on user role
+            const role = user.user_detail.role;
+            if (role === 'Patient') {
                 navigate('/patient-landing-page');
+            } else if (role === 'Staff') {
+                navigate('/staff-landing-page');
+            } else if (role === 'Admin') {
+                navigate('/admin-panel');
             } else {
-                navigate('/');
+                navigate('/'); // Default fallback
             }
         } catch (err) {
             setError(err.response?.data?.error || err.message);
@@ -54,6 +60,7 @@ const Login = () => {
             setLoading(false);
         }
     };
+    
 
     return (
         <section className='w-full relative tracking-wide min-h-[80vh] flex justify-center items-center flex-col'>

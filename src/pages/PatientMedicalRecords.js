@@ -1,28 +1,26 @@
 import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import DiagnosisManagement from '../components/DiagnosisManagement';
 import ImageManagement from '../components/ImageManagement';
 import axios from 'axios';
 
 const PatientMedicalRecords = () => {
+  const { patientId } = useParams(); // Get patientId from URL params
   const [activeTab, setActiveTab] = useState('Diagnoses');
   const [medicalHistory, setMedicalHistory] = useState(null);
   const [error, setError] = useState('');
-  const [patientId, setPatientId] = useState(null);
   const [patientImages, setPatientImages] = useState([]);
 
   useEffect(() => {
     const fetchPatientData = async () => {
-      const loggedInUser = JSON.parse(localStorage.getItem('user'));
-      if (loggedInUser?.user_detail?.role === 'Patient') {
-        setPatientId(loggedInUser.id);
-      } else {
-        setError('Unauthorized access. Only patients can view medical records.');
+      if (!patientId) {
+        setError('Invalid patient ID.');
         return;
       }
 
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_BACKEND_URL}/patients/medical-histories/?patient=${loggedInUser.id}`
+          `${process.env.REACT_APP_BACKEND_URL}/patients/medical-histories/?patient=${patientId}`
         );
         setMedicalHistory(response.data[0]); // Assuming one medical history per patient
       } catch (err) {
@@ -31,7 +29,7 @@ const PatientMedicalRecords = () => {
     };
 
     fetchPatientData();
-  }, []);
+  }, [patientId]);
 
   useEffect(() => {
     const fetchPatientImages = async () => {
@@ -60,7 +58,7 @@ const PatientMedicalRecords = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold mb-4">Patient Medical Records</h1>
+      <h1 className="text-2xl font-bold mb-4">Patient Medical Record</h1>
 
       {/* Medical History Section */}
       {medicalHistory ? (
